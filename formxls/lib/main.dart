@@ -13,9 +13,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: const EscolhaPastaPage(), 
-    );
+    return MaterialApp(home: const EscolhaPastaPage());
   }
 }
 
@@ -32,10 +30,17 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
   bool fileBool = false;
   bool sheetBool = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _carregarCaminhoSalvo();
+  }
+
   Future<void> selecionarPasta() async {
     String? local = await FilePicker.platform.getDirectoryPath();
 
     if (local != null) {
+      await _salvarCaminho(local.toString());
       setState(() {
         folderString = local;
       });
@@ -63,18 +68,49 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
   }
 
   Future<void> rodarScriptPython(file) async {
-    final resultado = await Process.run('python3', [
+    final resultado = await Process.run('./.venv/bin/python3', [
       './src/main/python/main.py',
-      file!,
       'GET',
+      file!,
     ]);
 
     if (resultado.exitCode == 0) {
-      sheetList = jsonDecode(resultado.stdout);
       print("Colunas: ${jsonDecode(resultado.stdout)[0]}");
       print("Values: ${jsonDecode(resultado.stdout)[1]}");
       print("Tudo: ${jsonDecode(resultado.stdout)}");
-      setState(() {});
+      setState(() {
+        sheetList = jsonDecode(resultado.stdout);
+      });
+    } else {
+      print("Erro no Python: ${resultado.stderr}");
+    }
+  }
+
+  Future<void> _carregarCaminhoSalvo() async {
+    final resultado = await Process.run('./.venv/bin/python3', [
+      './src/main/python/main.py',
+      'DATABASE/save_path?',
+    ]);
+
+    if (resultado.exitCode == 0) {
+      print("Tudo: ${resultado.stdout}");
+      setState(() {
+        folderString = resultado.stdout.toString().trim();
+      });
+    } else {
+      print("Erro no Python: ${resultado.stderr}");
+    }
+  }
+
+  Future<void> _salvarCaminho(String path) async {
+    final resultado = await Process.run('./.venv/bin/python3', [
+      './src/main/python/main.py',
+      'DATABASE/save_path!',
+      path,
+    ]);
+
+    if (resultado.exitCode == 0) {
+      print("Tudo sc: ${resultado.stdout}");
     } else {
       print("Erro no Python: ${resultado.stderr}");
     }
@@ -83,8 +119,14 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Selecionar Local de Salvamento'),
-      centerTitle: true,),
+      appBar: AppBar(
+        title: Text(
+          folderString == null
+              ? 'Selecionar Local de Salvamento'
+              : 'Spreadsheets',
+        ),
+        centerTitle: true,
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -107,7 +149,7 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    "Salvar em:\n$folderString",
+                    "Path:\n$folderString",
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.blueGrey,
@@ -122,7 +164,7 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
                     future: listarExecutaveis(folderString!),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const CircularProgressIndicator();
+                        Text("loading...");
                       }
 
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -157,11 +199,12 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
                                   print(sheetBool);
                                 });
                               },
-                              icon: const Icon(Icons.save),
+                              icon: const Icon(Icons.apps),
                               label: const Text("View sheet"),
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 15,
+                                  horizontal: 10,
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
@@ -181,80 +224,86 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
                 ),
               ],
 
-              if (fileBool == false &&
-                  sheetBool == true &&
-                  sheetList!.isNotEmpty) ...[
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      spacing: 4,
-                      children: [
-                        for (
-                          int col = 0;
-                          col < sheetList![0].length;
-                          col++
-                        ) ...[
-                          Column(
-                            spacing: 4,
-                            children: [
-                              Text(sheetList![0][col].toString()),
-                              for (
-                                int val = 0;
-                                val < sheetList![1][col].length;
-                                val++
-                              ) ...[Text(sheetList![1][col][val].toString())],
-                            ],
+              if (fileBool == false && sheetBool == true) ...[
+                if (sheetList!.isNotEmpty) ...[
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            fileBool = !fileBool;
+                            sheetList?.clear();
+                            print(fileBool);
+                          });
+                        },
+                        icon: const Icon(Icons.arrow_left),
+                        label: const Text("Return"),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 15,
+                            horizontal: 10,
                           ),
-                        ],
-                      ],
-                    ),
-
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          fileBool = !fileBool;
-                          print(fileBool);
-                        });
-                      },
-                      icon: const Icon(Icons.save),
-                      label: const Text("View files"),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 15,
-                          horizontal: 10,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        spacing: 4,
+                        children: [
+                          for (
+                            int col = 0;
+                            col < sheetList![0].length;
+                            col++
+                          ) ...[
+                            Column(
+                              spacing: 4,
+                              children: [
+                                Text(sheetList![0][col].toString()),
+                                for (
+                                  int val = 0;
+                                  val < sheetList![1][col].length;
+                                  val++
+                                ) ...[Text(sheetList![1][col][val].toString())],
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  Text("loading..."),
+                ],
               ],
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                ElevatedButton.icon(
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const CreateFormPage(title: 'FormXls'),
-      ),
-    );
-  },
-  icon: const Icon(Icons.add),
-  label: const Text("Create forms"),
-  style: ElevatedButton.styleFrom(
-    padding: const EdgeInsets.symmetric(vertical: 15),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(10),
-    ),
-  ),
-),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const CreateFormPage(title: 'FormXls'),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text("Create forms"),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 15,
+                        horizontal: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
                   const SizedBox(width: 20), // Espaçamento
                   ElevatedButton.icon(
                     onPressed: () {
@@ -266,7 +315,10 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
                     icon: const Icon(Icons.save),
                     label: const Text("View files"),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 15,
+                        horizontal: 10,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
