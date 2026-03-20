@@ -1,13 +1,13 @@
-from CRUD.create import Create, style_columnREs
+from service.data import Data
 from CRUD.read import Read
 from banco import Sql
-from controller.handle_dataController import Hande_dataController
-from controller.style_columnController import Style_columnController
+from controller.create_dataController import Create_dataController
+from controller.update_dataController import Update_dataController
 import sys
 import json
 
-'''
-servico = Create()
+
+servico = Data()
 
 
 # Simulando entradas do usuário
@@ -22,8 +22,9 @@ servico.to_handle_values([
 # Sincroniza
 dados_finais = servico.synchronize_create_archive()
 print(dados_finais)
-servico = Hande_dataController(dados_finais)
-servico.handle()  '''
+servico = Update_dataController(dados_finais)
+servico.handle()  
+'''
 
 def GET(caminho):
    user = Read(caminho)
@@ -66,3 +67,4 @@ if __name__ == "__main__":
   servico = Hande_dataController(dados_finais)
   servico.handle()
 
+'''

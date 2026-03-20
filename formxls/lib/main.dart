@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
+import 'forms.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -34,6 +36,20 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
   void initState() {
     super.initState();
     _carregarCaminhoSalvo();
+  }
+
+  formsNavigation(List columnSheet){
+    try {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              FormPage(title: 'FormXls', columnSheetList: List<String>.from(columnSheet)),
+        ),
+      );
+    } catch (e) {
+      print('erro');
+    }
   }
 
   Future<void> selecionarPasta() async {
@@ -67,7 +83,7 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
     return executaveis;
   }
 
-  Future<void> rodarScriptPython(file) async {
+  Future<List<dynamic>> rodarScriptPython(file) async {
     final resultado = await Process.run('./.venv/bin/python3', [
       './src/main/python/main.py',
       'GET',
@@ -84,6 +100,8 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
     } else {
       print("Erro no Python: ${resultado.stderr}");
     }
+
+    return jsonDecode(resultado.stdout)[0];
   }
 
   Future<void> _carregarCaminhoSalvo() async {
@@ -120,10 +138,20 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          folderString == null
-              ? 'Selecionar Local de Salvamento'
-              : 'Spreadsheets',
+        title: TextButton(
+          onPressed: () {
+            setState(() {
+              folderString = null;
+              sheetList = null;
+              fileBool = false;
+              sheetBool = false;
+            });
+          },
+          child: Text(
+            folderString == null
+                ? 'Selecionar Local de Salvamento'
+                : 'Spreadsheets',
+          ),
         ),
         centerTitle: true,
       ),
@@ -168,9 +196,7 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
                       }
 
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Text(
-                          "Nenhum executável encontrado nesta pasta.",
-                        );
+                        return const Text("None found");
                       }
 
                       final arquivos = snapshot.data!;
@@ -188,28 +214,57 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
                             ),
                             title: Text(nomeApenas),
                             subtitle: Text(arquivos[index].path),
-                            trailing: ElevatedButton.icon(
-                              onPressed: () {
-                                rodarScriptPython(arquivos[index].path);
-                                setState(() {
-                                  fileBool = false;
-                                  sheetBool = true;
-                                  print("object");
-                                  print(fileBool);
-                                  print(sheetBool);
-                                });
-                              },
-                              icon: const Icon(Icons.apps),
-                              label: const Text("View sheet"),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 15,
-                                  horizontal: 10,
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              spacing: 20,
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    rodarScriptPython(arquivos[index].path);
+                                    setState(() {
+                                      fileBool = false;
+                                      sheetBool = true;
+                                      print("object");
+                                      print(fileBool);
+                                      print(sheetBool);
+                                    });
+                                  },
+                                  icon: const Icon(Icons.apps),
+                                  label: const Text("View sheet"),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 15,
+                                      horizontal: 10,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+
+                                ElevatedButton.icon(
+                                  onPressed: () async {
+                                    var columnSheet = await rodarScriptPython(
+                                      arquivos[index].path,
+                                    );
+
+                                    formsNavigation(
+                                      columnSheet,
+                                    );
+                                  },
+                                  icon: const Icon(Icons.article),
+                                  label: const Text("Forms"),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 15,
+                                      horizontal: 10,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                             onTap: () {
                               print(
@@ -225,33 +280,16 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
               ],
 
               if (fileBool == false && sheetBool == true) ...[
-                if (sheetList!.isNotEmpty) ...[
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            fileBool = !fileBool;
-                            sheetList?.clear();
-                            print(fileBool);
-                          });
-                        },
-                        icon: const Icon(Icons.arrow_left),
-                        label: const Text("Return"),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 15,
-                            horizontal: 10,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+
+                  children: [
+                    const SizedBox(height: 20), // Espaçamento
+
+                    if (sheetList != null) ...[
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        spacing: 4,
+                        spacing: 7,
                         children: [
                           for (
                             int col = 0;
@@ -272,11 +310,12 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
                           ],
                         ],
                       ),
+                    ] else ...[
+                      Text("loading..."),
                     ],
-                  ),
-                ] else ...[
-                  Text("loading..."),
-                ],
+                    const SizedBox(height: 20), // Espaçamento
+                  ],
+                ),
               ],
 
               Row(
@@ -288,12 +327,12 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              const CreateFormPage(title: 'FormXls'),
+                              const CreateFormPage(title: 'Formxls'),
                         ),
                       );
                     },
                     icon: const Icon(Icons.add),
-                    label: const Text("Create forms"),
+                    label: const Text("Create file"),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         vertical: 15,
@@ -309,11 +348,14 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
                     onPressed: () {
                       setState(() {
                         fileBool = !fileBool;
+                        sheetList = null;
                         print(fileBool);
                       });
                     },
-                    icon: const Icon(Icons.save),
-                    label: const Text("View files"),
+                    icon: Icon(
+                      fileBool == true ? Icons.folder : Icons.folder_open_sharp,
+                    ),
+                    label: const Text("View folder"),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         vertical: 15,

@@ -1,125 +1,128 @@
 import 'package:flutter/material.dart';
 
-class FormPage extends StatefulWidget {
-  final String title;
-  final String? initialFileName;
+void main() {
+  runApp(const MyApp());
+}
 
-  const FormPage({super.key, required this.title, this.initialFileName});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(title: 'FormXls', theme: ThemeData());
+  }
+}
+
+class FormPage extends StatefulWidget {
+  const FormPage({
+    super.key,
+    required this.title,
+    required this.columnSheetList,
+  });
+  final String title;
+  final List columnSheetList;
 
   @override
   State<FormPage> createState() => _FormPageState();
 }
 
 class _FormPageState extends State<FormPage> {
-  final _formKey = GlobalKey<FormState>();
+  int _counter = 0;
+  List<List> dataMap = [
+    [], //file
+    [], //table
+  ];
+  String exibivel = '';
+  List checkList = [];
 
-  // Alterado o nome para ficar mais claro que é um controlador de texto
-  late TextEditingController _fileNameController;
-  final _tableController = TextEditingController();
-  bool _isPredefined = false;
+  List<TextEditingController>? controllers;
 
   @override
   void initState() {
     super.initState();
-    // CORREÇÃO: Inicializando o controlador corretamente com o valor vindo do widget
-    _fileNameController = TextEditingController(text: widget.initialFileName ?? '');
+
+    handleControllers();
   }
 
-  @override
-  void dispose() {
-    // CORREÇÃO: Sempre descarte os controladores para evitar vazamento de memória
-    _fileNameController.dispose();
-    _tableController.dispose();
-    super.dispose();
-  }
-
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Processando Dados...')),
-      );
-
-      print("Arquivo: ${_fileNameController.text}");
-      print("Tabela: ${_tableController.text}");
-      print("Predefinida: $_isPredefined");
+  void handleControllers() {
+    controllers = [];
+    for (int i = 0; i < widget.columnSheetList.length; i++) {
+      controllers!.add(TextEditingController());
     }
+  }
+
+  final TextEditingController checkController = TextEditingController();
+
+  void _clearText(TextEditingController fieldText) {
+    setState(() {
+      fieldText.text = '';
+    });
+  }
+
+  void _addData(data) {
+    setState(() {
+      if (data is List) {
+        dataMap[_counter].add(List.from(data));
+      } else {
+        dataMap[_counter].add(data);
+      }
+    });
+  }
+
+  void _clearCheck() {
+    setState(() {
+      checkList.clear();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.title), centerTitle: true),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Icon(Icons.assignment, size: 80, color: Colors.deepPurple),
-              const SizedBox(height: 20),
-
-              // Campo: Nome do Arquivo
-              TextFormField(
-                controller: _fileNameController, // Nome corrigido aqui
-                decoration: const InputDecoration(
-                  labelText: 'Nome do Arquivo (.xlsx)',
-                  prefixIcon: Icon(Icons.insert_drive_file),
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Campo obrigatório';
-                  if (!value.toLowerCase().endsWith('.xlsx')) {
-                    return 'Deve terminar com .xlsx';
-                  }
-                  return null;
-                },
+      body: Center(
+        child: Column(
+          mainAxisAlignment:
+              MainAxisAlignment.center, // Corrigido o erro de sintaxe aqui
+          children: [
+            Form(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (var columnSheet
+                      in widget.columnSheetList.asMap().entries) ...[
+                    TextFormField(
+                      textAlign: TextAlign.center,
+                      controller: controllers?[columnSheet.key],
+                      textInputAction: TextInputAction.next,
+                      onFieldSubmitted: (_) {
+                        FocusScope.of(context).nextFocus();
+                      },
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        labelText: columnSheet.value,
+                        floatingLabelAlignment: FloatingLabelAlignment.center,
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.send, color: Colors.blueGrey),
+                          onPressed: () {},
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(height: 16),
-
-              // Campo: Nome da Tabela
-              TextFormField(
-                controller: _tableController,
-                decoration: const InputDecoration(
-                  labelText: 'Nome da Tabela',
-                  prefixIcon: Icon(Icons.table_chart),
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Digite o nome da tabela';
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 10),
-
-              SwitchListTile(
-                title: const Text("Tabelas Predefinidas?"),
-                secondary: const Icon(Icons.list_alt),
-                value: _isPredefined,
-                onChanged: (bool value) {
-                  setState(() {
-                    _isPredefined = value;
-                  });
-                },
-              ),
-
-              const SizedBox(height: 30),
-
-              ElevatedButton.icon(
-                onPressed: _submitForm,
-                icon: const Icon(Icons.save),
-                label: const Text("SALVAR FORMULÁRIO"),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          for (var i = 0; i < widget.columnSheetList.length; i++) {
+            print(controllers![i].text.toString());
+            
+          }
+        },
+        label: const Text("Finish row"),
+        icon: const Icon(Icons.description),
       ),
     );
   }
