@@ -1,3 +1,4 @@
+from CRUD.create import Create
 from service.data import Data
 from CRUD.read import Read
 from banco import Sql
@@ -7,6 +8,7 @@ import sys
 import json
 
 
+'''
 servico = Data()
 
 
@@ -41,30 +43,56 @@ def DATABASE_POST(path):
    user = Sql()
    user.post_path(path)
 
+def UPDATE(path , columns, rows):
+   try: 
+      servico = Data()
+      servico.to_handle_file(path)
+      servico.to_handle_column(columns)
+      servico.to_handle_values(rows)
+      dados_finais = servico.synchronize_create_archive()
+      up = Update_dataController(dados_finais)
+      up.handle()
+   except(e):
+     print(e)
+
+def CREATE( path: str, columns, rows):
+      servico = Data()
+      servico.to_handle_file(path)
+      servico.to_handle_column(columns)
+      servico.to_handle_values(rows)
+      dados_finais = servico.synchronize_create_archive()
+      print(dados_finais)
+      servico = Create_dataController(dados_finais)
+      servico.handle()
+
+    
+
 if __name__ == "__main__":
  method = sys.argv[1]
+
  if method == 'GET':
   path = sys.argv[2]
   GET(path)
+
  if method == 'DATABASE/save_path?':
   DATABASE_GET()
+
  if method == 'DATABASE/save_path!':
   path = sys.argv[2]
   DATABASE_POST(path)
+
+ if method == 'PATCH/forms':
+   print([sys.argv[2]] , sys.argv[4].split(','), sys.argv[3].split(','))
+   UPDATE([sys.argv[2]] , sys.argv[4].split(','), sys.argv[3].split(','))
+
  
-  
-  
-  
-
  if method == 'POST/forms':
-  data = sys.argv[2]
-  servico = Create()
-  servico.to_handle_file(data[0])
-  servico.to_handle_column(data[1])
-  servico.to_handle_values(data[2])
-  dados_finais = servico.synchronize_create_archive()
-  print(dados_finais)
-  servico = Hande_dataController(dados_finais)
-  servico.handle()
+   print([sys.argv[2]])
+   print(sys.argv[4].split(','))
+   print( sys.argv[3].split(','))
+   CREATE([sys.argv[2]] , 
+         sys.argv[4].split(','),
+         sys.argv[3].split(',')
+         )
 
-'''
+

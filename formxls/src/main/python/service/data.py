@@ -28,8 +28,10 @@ class Data:
     def synchronize_create_archive(self):
       for i in range(len(self.columns.column)):
          self.columns.vincular_valores(self.columns.column[i], self.values.values[i])
+
       for i in range(len(self.file.file)):
          self.file.vincular_columns(self.file.file[i] , self.columns.dados)
+         
       print(self.file.dados)
       return self.file.dados
     

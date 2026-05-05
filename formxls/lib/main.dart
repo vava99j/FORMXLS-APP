@@ -38,13 +38,13 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
     _carregarCaminhoSalvo();
   }
 
-  formsNavigation(List columnSheet){
+  formsNavigation(String Nome ,List columnSheet){
     try {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) =>
-              FormPage(title: 'FormXls', columnSheetList: List<String>.from(columnSheet)),
+              FormPage(title: Nome, columnSheetList: List<String>.from(columnSheet)),
         ),
       );
     } catch (e) {
@@ -249,7 +249,8 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
                                     );
 
                                     formsNavigation(
-                                      columnSheet,
+                                      arquivos[index].path,
+                                      columnSheet
                                     );
                                   },
                                   icon: const Icon(Icons.article),
@@ -327,7 +328,7 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              const CreateFormPage(title: 'Formxls'),
+                              CreateFormPage(title: folderString!),
                         ),
                       );
                     },
@@ -355,7 +356,7 @@ class _EscolhaPastaPageState extends State<EscolhaPastaPage> {
                     icon: Icon(
                       fileBool == true ? Icons.folder : Icons.folder_open_sharp,
                     ),
-                    label: const Text("View folder"),
+                    label: Text( fileBool == true ? "View path" : "View folder"),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         vertical: 15,

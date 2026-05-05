@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 void main() {
@@ -26,15 +28,8 @@ class FormPage extends StatefulWidget {
 }
 
 class _FormPageState extends State<FormPage> {
-  int _counter = 0;
-  List<List> dataMap = [
-    [], //file
-    [], //table
-  ];
-  String exibivel = '';
-  List checkList = [];
-
   List<TextEditingController>? controllers;
+  String row = '';
 
   @override
   void initState() {
@@ -51,27 +46,30 @@ class _FormPageState extends State<FormPage> {
   }
 
   final TextEditingController checkController = TextEditingController();
+  Future<void> finishRow() async {
+    row = controllers!.map((TextEditingController c) => c.text).join(',');
+    final String column = widget.columnSheetList!.join(',');
+    print(column);
+    try {
+      // 2. Limpamos e criamos a String a partir dos controladores
+      // Usamos .map para pegar o texto e .join para criar a String separada por vírgulas
 
-  void _clearText(TextEditingController fieldText) {
-    setState(() {
-      fieldText.text = '';
-    });
-  }
+      print("Dados formatados para o Python: $row");
 
-  void _addData(data) {
-    setState(() {
-      if (data is List) {
-        dataMap[_counter].add(List.from(data));
-      } else {
-        dataMap[_counter].add(data);
-      }
-    });
-  }
+      // 3. Chamada ao processo Python
+      // Todos os itens dentro da lista [] devem ser Strings
+      final resultado = await Process.run('./.venv/bin/python3', [
+        './src/main/python/main.py',
+        'PATCH/forms',
+        widget.title,
+        row,
+        column,
+      ]);
 
-  void _clearCheck() {
-    setState(() {
-      checkList.clear();
-    });
+      print("Saída do Python: \n ${resultado.stdout.toString()}");
+    } catch (e) {
+      print("Erro no Flutter: $e");
+    }
   }
 
   @override
@@ -80,8 +78,7 @@ class _FormPageState extends State<FormPage> {
       appBar: AppBar(title: Text(widget.title), centerTitle: true),
       body: Center(
         child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center, // Corrigido o erro de sintaxe aqui
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Form(
               child: Column(
@@ -100,8 +97,9 @@ class _FormPageState extends State<FormPage> {
                         border: const OutlineInputBorder(),
                         labelText: columnSheet.value,
                         floatingLabelAlignment: FloatingLabelAlignment.center,
+
                         suffixIcon: IconButton(
-                          icon: const Icon(Icons.send, color: Colors.blueGrey),
+                          icon: Icon(Icons.close, color: Colors.blueGrey),
                           onPressed: () {},
                         ),
                       ),
@@ -113,12 +111,13 @@ class _FormPageState extends State<FormPage> {
           ],
         ),
       ),
+
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          for (var i = 0; i < widget.columnSheetList.length; i++) {
-            print(controllers![i].text.toString());
-            
+          finishRow();
+          for (int i = 0; i < widget.columnSheetList.length; i++) {
+            controllers?[i].text = '';
           }
         },
         label: const Text("Finish row"),
