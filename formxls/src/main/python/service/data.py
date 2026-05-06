@@ -21,9 +21,6 @@ class Data:
     def to_handle_values(self , values: list):
         self.values = Values(values) 
 
-    def to_create_style_column(self, style_column: list):
-        self.style_column = Style_column(style_column)
-        return self.style_column
 
     def synchronize_create_archive(self):
       for i in range(len(self.columns.column)):

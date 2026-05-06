@@ -1,3 +1,4 @@
+from queue import Full
 import sqlite3
 
 class Sql:
@@ -42,7 +43,10 @@ class Sql:
         """Retorna o path salvo para o Flutter usar no início do app"""
         self.cursor.execute('SELECT path FROM Path WHERE id = 1')
         resultado = self.cursor.fetchone()
-        print(resultado[0])
+        if(resultado != ''):
+            print(resultado[0])
+        else:
+            self.post_path
 
     def path_save_sheet(self, file_name, column_file, rules):
         dados = (file_name, column_file, rules)

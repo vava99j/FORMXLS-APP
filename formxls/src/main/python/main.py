@@ -90,9 +90,10 @@ if __name__ == "__main__":
    print([sys.argv[2]])
    print(sys.argv[4].split(','))
    print( sys.argv[3].split(','))
+
    CREATE([sys.argv[2]] , 
-         sys.argv[4].split(','),
-         sys.argv[3].split(',')
+         sys.argv[3].split(','),
+         sys.argv[4].split(',')
          )
 
 

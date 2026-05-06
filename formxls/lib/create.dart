@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
 
 class CreateFormPage extends StatefulWidget {
   const CreateFormPage({super.key, required this.title});
-  final String title; 
+  final String title;
 
   @override
   State<CreateFormPage> createState() => _CreateFormPageState();
@@ -50,6 +50,9 @@ class _CreateFormPageState extends State<CreateFormPage> {
 
     setState(() {
       if (dataMap[0].isEmpty) {
+        colunasController.text.endsWith(".xlsx")
+            ? null
+            : colunasController.text += ".xlsx";
         dataMap[0].add(colunasController.text);
       } else {
         dataMap[1].add(colunasController.text);
@@ -57,7 +60,7 @@ class _CreateFormPageState extends State<CreateFormPage> {
     });
 
     colunasController.clear();
-    
+
     // Garante que o foco volte após o frame ser desenhado
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _foco.requestFocus();
@@ -65,9 +68,12 @@ class _CreateFormPageState extends State<CreateFormPage> {
   }
 
   Future<void> createXLS() async {
-    List<List<dynamic>> matrix = List.generate(dataMap[1].length, (index) => []);
+    List<List<dynamic>> matrix = List.generate(
+      dataMap[1].length,
+      (index) => [],
+    );
     String valuesJson = jsonEncode(matrix);
-    
+
     // Pegamos o caminho do arquivo (primeiro item da lista 0)
     String columnsJson = jsonEncode(dataMap[1]);
 
@@ -77,9 +83,12 @@ class _CreateFormPageState extends State<CreateFormPage> {
       final resultado = await Process.run('./.venv/bin/python3', [
         './src/main/python/main.py',
         'POST/forms',
-        widget.title.toString(),
+        dataMap[0][0].startsWith('/')
+            ? "${widget.title}\\${dataMap[0][0]}"
+            : "${widget.title}/${dataMap[0][0]}",
         columnsJson,
-        valuesJson,
+        "[oi , ola]",
+        
       ]);
 
       if (resultado.exitCode == 0) {
@@ -97,13 +106,13 @@ class _CreateFormPageState extends State<CreateFormPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          dataMap[0].isEmpty 
-              ? widget.title 
+          dataMap[0].isEmpty
+              ? widget.title
               // Usando startsWith para evitar erro de índice caso a string esteja vazia
-              : (dataMap[0][0].startsWith('/') 
-                  ? "${widget.title}\\${dataMap[0][0]}" 
-                  : "${widget.title}/${dataMap[0][0]}"),
-        ), 
+              : (dataMap[0][0].startsWith('/')
+                    ? "${widget.title}\\${dataMap[0][0]}"
+                    : "${widget.title}/${dataMap[0][0]}"),
+        ),
         centerTitle: true,
       ),
       // Correção: o Center agora envolve o Padding corretamente com parênteses

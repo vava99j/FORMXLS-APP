@@ -35,6 +35,9 @@ flutter_launcher_icons:
   windows:
     generate: true
     image_path: "assets/logo.png"
+  linux:
+    generate: true
+    image_path: "assets/logo.png"
 
 # --------------------------------------------------------
 # CONFIGURAÇÃO DA TELA DE CARREGAMENTO (Splash Screen)
