@@ -1,4 +1,3 @@
-from CRUD.create import Create
 from service.data import Data
 from CRUD.read import Read
 from banco import Sql
@@ -7,8 +6,8 @@ from controller.update_dataController import Update_dataController
 import sys
 import json
 
-
 '''
+
 servico = Data()
 
 
@@ -16,16 +15,14 @@ servico = Data()
 servico.to_handle_file(["Relatorio_Vendas"])
 servico.to_handle_column(["Nomes", "status", "valor_base", "valor_adicional"])
 servico.to_handle_values([
-    ["jorge", "davi", "mieri"],
-    ["negociando", "fechado", "cancelado"],
-    [1000.0, 500.0, 1200.0],
-    [250.0, 50.0, 300.0]
+    [],[],[],[]
     ])
 # Sincroniza
 dados_finais = servico.synchronize_create_archive()
 print(dados_finais)
-servico = Update_dataController(dados_finais)
+servico = Create_dataController(dados_finais)
 servico.handle()  
+
 '''
 
 def GET(caminho):
@@ -83,6 +80,7 @@ if __name__ == "__main__":
 
  if method == 'PATCH/forms':
    print([sys.argv[2]] , sys.argv[4].split(','), sys.argv[3].split(','))
+
    UPDATE([sys.argv[2]] , sys.argv[4].split(','), sys.argv[3].split(','))
 
  
@@ -95,5 +93,4 @@ if __name__ == "__main__":
          sys.argv[3].split(','),
          sys.argv[4].split(',')
          )
-
 

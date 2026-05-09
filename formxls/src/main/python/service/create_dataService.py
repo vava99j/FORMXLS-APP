@@ -6,7 +6,6 @@ class Create_dataService:
 
  def create(self):
       print("\nDicionário que será enviado ao Pandas:")
-      print(self.nome)
       print(self.file)
-      repo = Create(self.nome, self.file)
+      repo = Create(self.nome, self.file[self.nome])
       repo.create()

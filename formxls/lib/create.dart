@@ -68,27 +68,28 @@ class _CreateFormPageState extends State<CreateFormPage> {
   }
 
   Future<void> createXLS() async {
-    List<List<dynamic>> matrix = List.generate(
-      dataMap[1].length,
-      (index) => [],
-    );
-    String valuesJson = jsonEncode(matrix);
+    String columnsString = '';
+    String valuesStrings = '';
 
-    // Pegamos o caminho do arquivo (primeiro item da lista 0)
-    String columnsJson = jsonEncode(dataMap[1]);
+    for (int i = 0; i <= dataMap[1].length-1; i++) {
+    valuesStrings +=  i >= dataMap[1].length-1 ? "" :  ",";
+    }
 
-    print("Enviando para Python: $valuesJson");
+      for (int i = 0; i <= dataMap[1].length-1; i++) {
+    columnsString +=  i >= dataMap[1].length-1 ? dataMap[1][i] :  "${dataMap[1][i]},";
+    }
 
     try {
+      print(columnsString);
+      print(valuesStrings);
       final resultado = await Process.run('./.venv/bin/python3', [
         './src/main/python/main.py',
         'POST/forms',
         dataMap[0][0].startsWith('/')
             ? "${widget.title}\\${dataMap[0][0]}"
             : "${widget.title}/${dataMap[0][0]}",
-        columnsJson,
-        "[oi , ola]",
-        
+        columnsString,
+        valuesStrings,
       ]);
 
       if (resultado.exitCode == 0) {
@@ -108,16 +109,17 @@ class _CreateFormPageState extends State<CreateFormPage> {
         title: Text(
           dataMap[0].isEmpty
               ? widget.title
-              // Usando startsWith para evitar erro de índice caso a string esteja vazia
               : (dataMap[0][0].startsWith('/')
                     ? "${widget.title}\\${dataMap[0][0]}"
                     : "${widget.title}/${dataMap[0][0]}"),
         ),
         centerTitle: true,
       ),
-      // Correção: o Center agora envolve o Padding corretamente com parênteses
       body: Center(
-        child: Padding(
+      child: 
+      Column(
+        children: [
+            Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: TextField(
             focusNode: _foco,
@@ -136,7 +138,16 @@ class _CreateFormPageState extends State<CreateFormPage> {
             ),
           ),
         ),
-      ), // Correção: o ponto e vírgula que estava aqui foi removido
+        Text(dataMap[0].isNotEmpty ? dataMap[0][0] : ''),
+        if(dataMap[1].isNotEmpty)...[
+          for(var columns in dataMap[1])...[
+            Text(columns)
+          ]
+        ]
+        ],
+      ),
+        
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: dataMap[1].isNotEmpty
           ? FloatingActionButton.extended(
